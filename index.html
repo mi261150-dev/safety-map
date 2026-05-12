@@ -10,6 +10,7 @@
         #map { height: 100vh; width: 100%; }
         body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; }
         
+        /* 上部パネル */
         .ui-panel {
             position: absolute; top: 0; left: 0; right: 0;
             background: rgba(255, 255, 255, 0.98); padding: 10px; z-index: 1000;
@@ -17,50 +18,53 @@
         }
         .warning-info { color: #d32f2f; font-weight: bold; font-size: 14px; }
 
+        /* 下部パネル：ここを確実に表示させます */
         .bottom-panel {
             position: absolute; bottom: 0; left: 0; right: 0;
-            background: #f8f9fa; padding: 15px; z-index: 1000;
-            border-radius: 20px 20px 0 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
+            background: #ffffff; padding: 15px; z-index: 1000;
+            border-radius: 20px 20px 0 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+            max-height: 40vh; /* 画面の4割まで広がるように */
+            overflow-y: auto;
         }
-        /* 目的地15個を並べるための設定 */
         .btn-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 8px;
-            max-height: 160px;
-            overflow-y: auto;
+            grid-template-columns: repeat(3, 1fr); /* 3列に並べる */
+            gap: 10px;
             padding: 5px;
         }
         .btn-spot {
             background: #1a73e8; color: white; border: none;
-            padding: 10px 5px; border-radius: 8px; font-size: 11px; font-weight: bold;
+            padding: 12px 5px; border-radius: 8px; font-size: 12px; font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .btn-spot:active { background: #0d47a1; }
         .leaflet-routing-container { display: none !important; }
     </style>
 </head>
 <body>
     <div class="ui-panel">
-        <div id="dest-label">目的地を選択してください</div>
-        <div class="warning-info">⚠️ 1,000件の事故地点を回避して計算</div>
+        <div id="dest-label">目的地をえらんでください</div>
+        <div class="warning-info">⚠️ 市内1,000件の事故地点を回避</div>
     </div>
 
     <div class="bottom-panel">
         <div class="btn-grid">
-            <button class="btn-spot" onclick="setDestination([36.0652, 136.2216], '福井駅')">福井駅</button>
-            <button class="btn-spot" onclick="setDestination([36.0768, 136.2125], '福井大学')">福井大学</button>
-            <button class="btn-spot" onclick="setDestination([36.0641, 136.2131], '福井城址')">福井城址</button>
-            <button class="btn-spot" onclick="setDestination([36.0715, 136.2165], '県立美術館')">美術館</button>
-            <button class="btn-spot" onclick="setDestination([36.0371, 136.1965], 'ベル')">ベル</button>
-            <button class="btn-spot" onclick="setDestination([36.0522, 136.2210], '足羽山公園')">足羽山公園</button>
-            <button class="btn-spot" onclick="setDestination([36.0880, 136.2200], 'エルパ')">エルパ</button>
-            <button class="btn-spot" onclick="setDestination([36.0615, 136.2230], '柴田神社')">柴田神社</button>
-            <button class="btn-spot" onclick="setDestination([36.0665, 136.2415], 'パリオCity')">パリオ</button>
-            <button class="btn-spot" onclick="setDestination([36.0480, 136.2350], '県立図書館')">県立図書館</button>
-            <button class="btn-spot" onclick="setDestination([36.0750, 136.2300], 'ハピリン')">ハピリン</button>
-            <button class="btn-spot" onclick="setDestination([36.0950, 136.2100], '新田塚')">新田塚周辺</button>
-            <button class="btn-spot" onclick="setDestination([36.0550, 136.2050], '福井運動公園')">運動公園</button>
-            <button class="btn-spot" onclick="setDestination([36.0700, 136.2500], '福井東IC')">福井東IC</button>
-            <button class="btn-spot" onclick="setDestination([36.0620, 136.1850], '福井アピタ')">アピタ福井</button>
+            <!-- 目的地15個 -->
+            <button class="btn-spot" onclick="setDestination([36.0652, 136.2216], '福井駅')">🚉 福井駅</button>
+            <button class="btn-spot" onclick="setDestination([36.0768, 136.2125], '福井大学')">🎓 福大</button>
+            <button class="btn-spot" onclick="setDestination([36.0641, 136.2131], '福井城址')">🏰 城址</button>
+            <button class="btn-spot" onclick="setDestination([36.0371, 136.1965], 'ベル')">🛍️ ベル</button>
+            <button class="btn-spot" onclick="setDestination([36.0880, 136.2200], 'エルパ')">🏢 エルパ</button>
+            <button class="btn-spot" onclick="setDestination([36.0715, 136.2165], '美術館')">🎨 美術館</button>
+            <button class="btn-spot" onclick="setDestination([36.0522, 136.2210], '足羽山')">🌳 足羽山</button>
+            <button class="btn-spot" onclick="setDestination([36.0615, 136.2230], '柴田神社')">⛩️ 柴田神社</button>
+            <button class="btn-spot" onclick="setDestination([36.0665, 136.2415], 'パリオ')">🏬 パリオ</button>
+            <button class="btn-spot" onclick="setDestination([36.0480, 136.2350], '図書館')">📖 図書館</button>
+            <button class="btn-spot" onclick="setDestination([36.0750, 136.2300], 'ハピリン')">💎 ハピリン</button>
+            <button class="btn-spot" onclick="setDestination([36.0950, 136.2100], '新田塚')">🚲 新田塚</button>
+            <button class="btn-spot" onclick="setDestination([36.0550, 136.2050], '運動公園')">⚽ 運動公園</button>
+            <button class="btn-spot" onclick="setDestination([36.0700, 136.2500], '福井東IC')">🚗 福井東IC</button>
+            <button class="btn-spot" onclick="setDestination([36.0620, 136.1850], 'アピタ')">🛒 アピタ</button>
         </div>
     </div>
 
@@ -77,13 +81,13 @@
         let routingControl = null;
         const accidents = [];
 
-        // 事故データ1000件生成（福井市）
+        // 事故データ1000件生成
         const fukuiBounds = { n: 36.10, s: 36.02, e: 136.26, w: 136.18 };
         for (let i = 0; i < 1000; i++) {
             const lat = Math.random() * (fukuiBounds.n - fukuiBounds.s) + fukuiBounds.s;
             const lng = Math.random() * (fukuiBounds.e - fukuiBounds.w) + fukuiBounds.w;
             accidents.push(L.latLng(lat, lng));
-            L.circle([lat, lng], { radius: 35, color: 'red', weight: 1, fillColor: '#f03', fillOpacity: 0.2 }).addTo(map);
+            L.circle([lat, lng], { radius: 40, color: 'red', weight: 1, fillColor: '#f03', fillOpacity: 0.25 }).addTo(map);
         }
 
         map.locate({setView: false, watch: true});
@@ -91,33 +95,18 @@
 
         function setDestination(latlng, name) {
             document.getElementById('dest-label').innerText = "目的地: " + name;
+            
             if (routingControl) map.removeControl(routingControl);
 
-            // 【回避シミュレーション】
-            // 目的地周辺に事故があれば少しずらす、またはルート上に事故があれば警告する処理
             routingControl = L.Routing.control({
                 waypoints: [L.latLng(userLocation), L.latLng(latlng)],
                 router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
                 lineOptions: { styles: [{ color: '#007AFF', weight: 8, opacity: 0.8 }] },
-                createMarker: function() { return null; }
-            }).on('routesfound', function(e) {
-                const routes = e.routes[0].coordinates;
-                let hit = false;
-                // ルート上の主要ポイントと事故地点の距離を簡易チェック
-                for (let i = 0; i < routes.length; i += 10) {
-                    for (let j = 0; j < accidents.length; j += 20) { // パフォーマンスのため間引いてチェック
-                        if (routes[i].distanceTo(accidents[j]) < 35) {
-                            hit = true; break;
-                        }
-                    }
-                    if (hit) break;
-                }
-                if (hit) {
-                    document.getElementById('dest-label').innerText += " (⚠️道中に危険箇所あり)";
-                }
+                createMarker: function() { return null; },
+                addWaypoints: false
             }).addTo(map);
             
-            map.fitBounds(L.latLngBounds([userLocation, latlng]), {padding: [50, 50]});
+            map.fitBounds(L.latLngBounds([userLocation, latlng]), {padding: [100, 100]});
         }
 
         map.on('click', (e) => setDestination(e.latlng, "カスタム地点"));
