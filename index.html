@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>鯖江・完全自由ナビマップ</title>
+    <title>福大・安全ナビマップ（試作）</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         #map { height: 100vh; width: 100%; }
@@ -19,88 +19,83 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .dest-info { color: #d32f2f; font-weight: bold; font-size: 16px; margin-bottom: 8px; }
-        .instruction { font-size: 12px; color: #666; }
+        .dest-info { color: #1a73e8; font-weight: bold; font-size: 16px; margin-bottom: 8px; }
+        .instruction { font-size: 11px; color: #666; }
         .btn-group { display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; }
         .btn-spot {
             white-space: nowrap;
-            background: #4caf50;
+            background: #1a73e8;
             color: white;
             border: none;
             padding: 8px 15px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
         }
     </style>
 </head>
 <body>
     <div class="ui-panel">
         <div class="dest-info" id="dest-label">📍 地図をタップして目的地を選択</div>
-        <div class="instruction">事故の赤いエリアを避けて移動しましょう</div>
+        <div class="instruction">福大周辺の事故多発エリアを避け、安全な道を選びましょう。</div>
         <div class="btn-group">
-            <button class="btn-spot" onclick="setDestination([35.9429, 136.1808], '西山公園')">🌸西山公園</button>
-            <button class="btn-spot" onclick="setDestination([35.9416, 136.1856], '誠照寺')">⛩️誠照寺</button>
-            <button class="btn-spot" onclick="setDestination([35.9431, 136.1885], '鯖江駅')">🚃鯖江駅</button>
+            <button class="btn-spot" onclick="setDestination([36.0768, 136.2125], '福井大学 正門')">🎓福大正門</button>
+            <button class="btn-spot" onclick="setDestination([36.0795, 136.2115], '福大前西福井駅')">🚃西福井駅</button>
+            <button class="btn-spot" onclick="setDestination([36.0715, 136.2165], '福井県立美術館')">🎨美術館</button>
         </div>
     </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const map = L.map('map').setView([35.9445, 136.1862], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        // 1. 福井大学 文京キャンパスを中心に設定
+        const map = L.map('map').setView([36.0768, 136.2125], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
-        let userLocation = [35.9445, 136.1862];
-        let routeLine = L.polyline([], {color: '#007AFF', weight: 8, opacity: 0.6, dashArray: '1, 15'}).addTo(map);
+        let userLocation = [36.0768, 136.2125];
+        let routeLine = L.polyline([], {color: '#1a73e8', weight: 8, opacity: 0.6, dashArray: '1, 15'}).addTo(map);
         let destMarker;
 
-        // --- 1. GPS現在地 ---
+        // 2. GPS現在地
         map.locate({setView: false, watch: true});
         map.on('locationfound', (e) => {
             userLocation = e.latlng;
             updateRoute();
         });
 
-        // --- 2. 【新機能】地図タップで目的地をセット ---
+        // 3. 地図タップで目的地セット
         map.on('click', function(e) {
-            setDestination(e.latlng, "カスタム目的地");
+            setDestination(e.latlng, "指定地点");
         });
 
         function setDestination(latlng, name) {
             document.getElementById('dest-label').innerText = "目的地: " + name;
-            
             if (destMarker) map.removeLayer(destMarker);
             destMarker = L.marker(latlng).addTo(map).bindPopup(name).openPopup();
-
             updateRoute();
-            
-            // 目的地まで画面をフィットさせる
             map.fitBounds(L.latLngBounds([userLocation, latlng]), {padding: [50, 50]});
         }
 
         function updateRoute() {
             if (destMarker) {
-                // 現在地から目的地までの点線を描画
                 routeLine.setLatLngs([userLocation, destMarker.getLatLng()]);
             }
         }
 
-        // --- 3. 事故データ（増量版） ---
+        // 4. 福大周辺のダミー事故データ（サンプル）
         const accidents = [
-            {pos: [35.9482, 136.1851], type: "古町交差点", sev: "重傷"},
-            {pos: [35.9420, 136.1950], type: "東鯖江", sev: "軽傷"},
-            {pos: [35.9520, 136.1750], type: "下河端", sev: "軽傷"},
-            {pos: [35.9440, 136.1890], type: "交差点B", sev: "重傷"},
-            {pos: [35.9410, 136.1820], type: "路地C", sev: "軽傷"},
-            {pos: [35.9475, 136.1830], type: "公園付近F", sev: "重傷"},
-            {pos: [35.9430, 136.1780], type: "西側路地", sev: "軽傷"},
-            {pos: [35.9425, 136.1865], type: "市役所裏", sev: "軽傷"}
+            {pos: [36.0782, 136.2110], type: "西福井駅前交差点", sev: "重傷", comm: "踏切と交差点が近く複雑です"},
+            {pos: [36.0755, 136.2135], type: "大学南側路地", sev: "軽傷", comm: "学生の飛び出しに注意"},
+            {pos: [36.0740, 136.2170], type: "フェニックス通り合流", sev: "重傷", comm: "交通量が非常に多いです"},
+            {pos: [36.0790, 136.2160], type: "北側交差点", sev: "軽傷", comm: "右左折時の巻き込みに注意"},
+            {pos: [36.0725, 136.2115], type: "明新小学校付近", sev: "軽傷", comm: "通学路につき徐行"}
         ];
 
         accidents.forEach(acc => {
             const color = acc.sev === '重傷' ? 'red' : 'orange';
             L.circleMarker(acc.pos, {radius: 10, fillColor: color, color: 'black', weight: 1, fillOpacity: 0.8}).addTo(map);
-            L.circle(acc.pos, {radius: 50, color: 'red', weight: 0, fillColor: 'red', fillOpacity: 0.2}).addTo(map);
+            L.circle(acc.pos, {radius: 60, color: 'red', weight: 0, fillColor: 'red', fillOpacity: 0.2}).addTo(map);
         });
     </script>
 </body>
