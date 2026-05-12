@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>福井市・道路沿い事故回避ナビ</title>
+    <title>福井市・事故回避ナビ（30拠点版）</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <style>
@@ -20,36 +20,58 @@
             border-radius: 20px 20px 0 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
             max-height: 180px; overflow-y: auto; transition: max-height 0.3s;
         }
-        .bottom-panel:active, .bottom-panel:hover { max-height: 60vh; }
+        .bottom-panel:active, .bottom-panel:hover { max-height: 70vh; }
+        .pull-bar { width: 40px; height: 5px; background: #ccc; border-radius: 3px; margin: 0 auto 10px; }
         .btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .btn-spot { background: #1a73e8; color: white; border: none; padding: 10px 2px; border-radius: 6px; font-size: 11px; font-weight: bold; }
-        /* ルート案内のテキストボックスを隠す */
+        .btn-spot { background: #1a73e8; color: white; border: none; padding: 10px 2px; border-radius: 6px; font-size: 11px; font-weight: bold; min-height: 40px; }
         .leaflet-routing-container { display: none !important; }
     </style>
 </head>
 <body>
     <div class="ui-panel">
-        <div id="dest-label" style="font-weight:bold;">目的地を選択</div>
-        <div style="color:#d32f2f; font-size:12px;">🛡️ 道路網に沿って事故を迂回中</div>
+        <div id="dest-label" style="font-weight:bold;">目的地を選択（全30箇所）</div>
+        <div style="color:#d32f2f; font-size:12px;">🛡️ 道路網に沿って事故を迂回</div>
     </div>
 
     <div class="bottom-panel">
+        <div class="pull-bar"></div>
         <div class="btn-grid">
+            <!-- 主要駅・交通 -->
             <button class="btn-spot" onclick="navigate([36.0652, 136.2216], '福井駅')">🚉 福井駅</button>
-            <button class="btn-spot" onclick="navigate([36.0768, 136.2125], '福大')">🎓 福大</button>
+            <button class="btn-spot" onclick="navigate([36.0700, 136.2500], '福井東IC')">🚗 福井東IC</button>
+            <button class="btn-spot" onclick="navigate([36.0350, 136.2200], '福井IC')">高速入口</button>
+            <!-- 商業施設 -->
             <button class="btn-spot" onclick="navigate([36.0371, 136.1965], 'ベル')">🛍️ ベル</button>
             <button class="btn-spot" onclick="navigate([36.0880, 136.2200], 'エルパ')">🏢 エルパ</button>
-            <button class="btn-spot" onclick="navigate([36.0715, 136.2165], '美術館')">🎨 美術館</button>
-            <button class="btn-spot" onclick="navigate([36.0522, 136.2210], '足羽山')">🌳 足羽山</button>
             <button class="btn-spot" onclick="navigate([36.0665, 136.2415], 'パリオ')">🏬 パリオ</button>
-            <button class="btn-spot" onclick="navigate([36.0480, 136.2350], '図書館')">📖 図書館</button>
-            <button class="btn-spot" onclick="navigate([36.0750, 136.2300], 'ハピリン')">💎 ハピリン</button>
-            <button class="btn-spot" onclick="navigate([36.0950, 136.2100], '新田塚')">🚲 新田塚</button>
-            <button class="btn-spot" onclick="navigate([36.0550, 136.2050], '運動公園')">⚽ 運動公園</button>
-            <button class="btn-spot" onclick="navigate([36.0700, 136.2500], '福井東IC')">🚗 福井東IC</button>
             <button class="btn-spot" onclick="navigate([36.0620, 136.1850], 'アピタ')">🛒 アピタ</button>
+            <button class="btn-spot" onclick="navigate([36.0750, 136.2300], 'ハピリン')">💎 ハピリン</button>
+            <button class="btn-spot" onclick="navigate([36.1050, 136.2350], 'ワイプラザ')">📦 ワイプラ</button>
+            <!-- 教育・文化 -->
+            <button class="btn-spot" onclick="navigate([36.0768, 136.2125], '福大')">🎓 福大</button>
+            <button class="btn-spot" onclick="navigate([36.0715, 136.2165], '美術館')">🎨 美術館</button>
+            <button class="btn-spot" onclick="navigate([36.0480, 136.2350], '図書館')">📖 図書館</button>
+            <button class="btn-spot" onclick="navigate([36.0645, 136.2190], '郷土歴史館')">歴史館</button>
+            <button class="btn-spot" onclick="navigate([36.0610, 136.2180], '県庁')">🏛️ 福井県庁</button>
+            <!-- 観光・レジャー -->
+            <button class="btn-spot" onclick="navigate([36.0522, 136.2210], '足羽山')">🌳 足羽山</button>
             <button class="btn-spot" onclick="navigate([36.0615, 136.2230], '柴田神社')">⛩️ 柴田神社</button>
+            <button class="btn-spot" onclick="navigate([36.0650, 136.2150], '養浩館')">🏯 養浩館</button>
+            <button class="btn-spot" onclick="navigate([36.0550, 136.2050], '運動公園')">⚽ 運動公園</button>
+            <button class="btn-spot" onclick="navigate([36.0700, 136.2000], '西公園')">🌸 西公園</button>
+            <button class="btn-spot" onclick="navigate([36.0600, 136.2300], 'セーレン')">🏟️ セーレン</button>
+            <!-- 生活・病院 -->
             <button class="btn-spot" onclick="navigate([36.0800, 136.2350], '県立病院')">🏥 県立病院</button>
+            <button class="btn-spot" onclick="navigate([36.0700, 136.2150], '済生会病院')">🏥 済生会</button>
+            <button class="btn-spot" onclick="navigate([36.0600, 136.2000], '赤十字')">🏥 日赤病院</button>
+            <button class="btn-spot" onclick="navigate([36.0950, 136.2100], '新田塚')">🚲 新田塚</button>
+            <!-- その他エリア -->
+            <button class="btn-spot" onclick="navigate([36.0400, 136.2400], '成和')">🏘️ 成和</button>
+            <button class="btn-spot" onclick="navigate([36.0850, 136.2000], '幾久')">🏢 幾久公園</button>
+            <button class="btn-spot" onclick="navigate([36.0500, 136.2500], '東福井')">📍 東福井</button>
+            <button class="btn-spot" onclick="navigate([36.0800, 136.1800], '森田')">🏘️ 森田駅</button>
+            <button class="btn-spot" onclick="navigate([36.0200, 136.2000], '清明')">📍 清明</button>
+            <button class="btn-spot" onclick="navigate([36.1000, 136.2200], '高木')">📍 高木</button>
         </div>
     </div>
 
@@ -65,10 +87,10 @@
         let routingControl = null;
         const accidents = [];
 
-        // 事故現場1000件
+        // 事故現場1000件生成
         for (let i = 0; i < 1000; i++) {
-            const lat = Math.random() * (36.10 - 36.02) + 36.02;
-            const lng = Math.random() * (136.26 - 136.18) + 136.18;
+            const lat = Math.random() * (36.11 - 36.01) + 36.01;
+            const lng = Math.random() * (136.27 - 136.17) + 136.17;
             accidents.push(L.latLng(lat, lng));
             L.circle([lat, lng], { radius: 30, color: 'red', weight: 1, fillColor: 'red', fillOpacity: 0.3 }).addTo(map);
         }
@@ -79,29 +101,22 @@
 
             const start = L.latLng(userLoc);
             const end = L.latLng(target);
-
-            // 【道路沿い回避ロジック】
-            // 始点と終点の中心付近にある事故を探し、その地点を避けるような「経由地」を道路網の上に置く
             let waypoints = [start];
             
-            const midLat = (start.lat + end.lat) / 2;
-            const midLng = (start.lng + end.lng) / 2;
-            const midPoint = L.latLng(midLat, midLng);
-
+            // 回避ロジック：中間地点近くの事故を避ける経由地を生成
+            const midPoint = L.latLng((start.lat + end.lat) / 2, (start.lng + end.lng) / 2);
             for(let acc of accidents) {
                 if (acc.distanceTo(midPoint) < 400) {
-                    // 事故地点から少し北東にずらした地点を経由させることで、道路網を維持しつつ迂回させる
-                    waypoints.push(L.latLng(acc.lat + 0.004, acc.lng + 0.004));
+                    waypoints.push(L.latLng(acc.lat + 0.005, acc.lng + 0.005));
                     break; 
                 }
             }
-
             waypoints.push(end);
 
             routingControl = L.Routing.control({
                 waypoints: waypoints,
                 router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
-                lineOptions: { styles: [{ color: '#007AFF', weight: 7, opacity: 0.8 }] },
+                lineOptions: { styles: [{ color: '#1a73e8', weight: 7, opacity: 0.8 }] },
                 createMarker: () => null,
                 addWaypoints: false,
                 fitSelectedRoutes: true
