@@ -2,44 +2,80 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>安全周遊マップ</title>
+    <title>鯖江・安全周遊マップ</title>
+    <!-- Leafletの地図ライブラリを読み込み -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         #map { height: 100vh; width: 100%; }
-        body { margin: 0; }
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            z-index: 1000;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
+    <div class="info-panel">
+        <b>鯖江 安全周遊マップ</b><br>
+        <small>● 事故多発地点 (赤:重傷 / 橙:軽傷)</small><br>
+        <small><span style="color:blue;">━</span> 安全おすすめルート</small>
+    </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 1. 地図の初期化（東京中心）
-        const map = L.map('map').setView([35.9445, 136.1862], 14);
+        // 1. 地図の初期化：鯖江市役所を中心に設定
+        const map = L.map('map').setView([35.9445, 136.1862], 15);
 
-        // 2. 背景地図（OpenStreetMap）の読み込み
+        // 2. 背景地図（OpenStreetMap）を読み込み
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // 3. 事故データの読み込み
+        // 3. 西山公園周辺の「安全おすすめルート」を描く
+        const safeRoute = [
+            [35.9431, 136.1835], // 西山公園駅付近
+            [35.9452, 136.1825], // 公園入口
+            [35.9485, 136.1815], // 結びの広場方面
+            [35.9495, 136.1790]  // 展望広場
+        ];
+        L.polyline(safeRoute, {
+            color: 'blue', 
+            weight: 6, 
+            opacity: 0.5,
+            lineJoin: 'round'
+        }).addTo(map).bindPopup("<b>おすすめ安全ルート:</b> 西山公園散策コース");
+
+        // 4. 鯖江の事故データ（data.json）を読み込んでプロット
         fetch('data.json')
             .then(response => response.json())
             .then(data => {
                 data.forEach(accident => {
-                    // 事故地点にサークルを配置
+                    // 重傷は赤、軽傷はオレンジで色分け
                     const color = accident.severity === '重傷' ? 'red' : 'orange';
+                    
                     L.circleMarker([accident.lat, accident.lng], {
-                        radius: 8,
+                        radius: 10,
                         fillColor: color,
                         color: "#000",
                         weight: 1,
                         opacity: 1,
                         fillOpacity: 0.8
                     }).addTo(map)
-                    .bindPopup(`<b>事故類型:</b> ${accident.type}<br><b>程度:</b> ${accident.severity}`);
+                    .bindPopup(`
+                        <b>事故場所:</b> ${accident.type}<br>
+                        <b>状況:</b> ${accident.severity}<br>
+                        <b>アドバイス:</b> ${accident.comment || '周囲を確認して通行してください'}
+                    `);
                 });
-            });
+            })
+            .catch(error => console.error('Error loading JSON:', error));
     </script>
 </body>
 </html>
