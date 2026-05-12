@@ -2,82 +2,97 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>鯖江・安全周遊マップ（現在地対応）</title>
+    <title>鯖江・安全ナビ周遊マップ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         #map { height: 100vh; width: 100%; }
-        body { margin: 0; padding: 0; font-family: sans-serif; }
-        .info-panel {
+        body { margin: 0; padding: 0; font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif; }
+        
+        /* スマホ向け案内パネル */
+        .nav-panel {
             position: absolute;
-            top: 10px;
-            left: 50px; /* ボタンと被らないように調整 */
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px;
+            bottom: 20px;
+            left: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
             z-index: 1000;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            pointer-events: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-align: center;
         }
+        .btn-nav {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .hazard-area { color: #FF3B30; font-weight: bold; }
+        .safe-route-text { color: #007AFF; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="info-panel">
-        <b>鯖江 安全周遊マップ</b><br>
-        <small>🔵 あなたの現在地</small><br>
-        <small>⚠️ 事故地点（赤:重傷 / 橙:軽傷）</small>
+    <div class="nav-panel">
+        <div id="nav-instruction">
+            <span class="safe-route-text">✨おすすめ周遊ルートを表示中</span><br>
+            <small>事故多発地点を避けて西山公園を散策しましょう</small>
+        </div>
+        <button class="btn-nav" onclick="focusUser()">現在地を表示</button>
     </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 1. 地図の初期化（鯖江市役所中心）
         const map = L.map('map').setView([35.9445, 136.1862], 15);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // 2. 現在地を表示する機能
-        // スマホなどのGPSを利用して位置を特定します
-        map.locate({setView: false, watch: true, maxZoom: 16});
-
-        // 現在地が見つかった時の処理
-        const userIcon = L.circleMarker([0, 0], {
-            radius: 8,
-            fillColor: '#2A82F4',
-            color: 'white',
-            weight: 3,
-            opacity: 1,
-            fillOpacity: 1
-        }).addTo(map).bindPopup("あなたはここにいます");
-
-        map.on('locationfound', function(e) {
-            userIcon.setLatLng(e.latlng);
+        // --- 1. 現在地機能 ---
+        let userMarker;
+        map.locate({setView: false, watch: true});
+        map.on('locationfound', (e) => {
+            if (!userMarker) {
+                userMarker = L.circleMarker(e.latlng, {radius: 8, fillColor: '#007AFF', color: 'white', weight: 3, fillOpacity: 1}).addTo(map);
+            } else {
+                userMarker.setLatLng(e.latlng);
+            }
         });
 
-        map.on('locationerror', function(e) {
-            console.alert("位置情報が取得できませんでした。設定を確認してください。");
-        });
+        function focusUser() {
+            if (userMarker) map.setView(userMarker.getLatLng(), 16);
+        }
 
-        // 3. 西山公園周辺の「安全おすすめルート」
-        const safeRoute = [[35.9431, 136.1835], [35.9452, 136.1825], [35.9485, 136.1815], [35.9495, 136.1790]];
-        L.polyline(safeRoute, {color: 'blue', weight: 6, opacity: 0.4}).addTo(map);
+        // --- 2. 事故回避・周遊ルート（青い線） ---
+        // 事故が多い国道8号や主要交差点を避け、裏道や公園内を通るルート
+        const tourRoute = [
+            [35.9431, 136.1885], // 鯖江駅
+            [35.9435, 136.1855], // 商店街を通る
+            [35.9450, 136.1840], // 三六温泉方面
+            [35.9452, 136.1825], // 西山公園入口（ここから安全エリア）
+            [35.9470, 136.1810], // 公園内スロープ
+            [35.9485, 136.1815], // 結びの広場
+            [35.9505, 136.1800]  // 西山動物園（ゴール！）
+        ];
+        L.polyline(tourRoute, {color: '#007AFF', weight: 8, opacity: 0.6, lineJoin: 'round'}).addTo(map)
+         .bindPopup("<b>安全周遊ルート</b><br>事故の多い大通りを避けた散策道です");
 
-        // 4. 鯖江の事故データ（data.json）の読み込み
+        // --- 3. 事故多発地点の読み込みと「警告エリア」 ---
         fetch('data.json')
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
-                data.forEach(accident => {
-                    const color = accident.severity === '重傷' ? 'red' : 'orange';
-                    L.circleMarker([accident.lat, accident.lng], {
-                        radius: 10,
-                        fillColor: color,
-                        color: "#000",
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    }).addTo(map)
-                    .bindPopup(`<b>${accident.type}</b><br>${accident.severity}<br>${accident.comment}`);
+                data.forEach(acc => {
+                    // 事故地点を点で表示
+                    const color = acc.severity === '重傷' ? 'red' : 'orange';
+                    L.circleMarker([acc.lat, acc.lng], {radius: 10, fillColor: color, color: 'black', weight: 1, fillOpacity: 0.8}).addTo(map)
+                     .bindPopup(`⚠️<b>危険地点</b><br>${acc.type}<br>${acc.comment}`);
+
+                    // 事故地点の周囲をうっすら赤くして「近寄るな」を強調
+                    L.circle([acc.lat, acc.lng], {radius: 50, color: 'red', weight: 0, fillColor: 'red', fillOpacity: 0.2}).addTo(map);
                 });
             });
     </script>
