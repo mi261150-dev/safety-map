@@ -2,100 +2,139 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>福大・安全ナビマップ（試作）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>福大・安全周遊ナビ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        #map { height: 100vh; width: 100%; }
-        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #map { height: 100vh; width: 100%; z-index: 0; }
+        body { margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; overflow: hidden; }
         
-        .ui-panel {
+        /* 上部パネル：目的地案内 */
+        .top-panel {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
+            top: 0; left: 0; right: 0;
             background: rgba(255, 255, 255, 0.95);
             padding: 15px;
             z-index: 1000;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            text-align: center;
         }
-        .dest-info { color: #1a73e8; font-weight: bold; font-size: 16px; margin-bottom: 8px; }
-        .instruction { font-size: 11px; color: #666; }
-        .btn-group { display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; }
+        #dest-label { font-size: 18px; font-weight: bold; color: #d32f2f; margin-bottom: 10px; }
+
+        /* 下部パネル：観光・施設選択（スクロール可能） */
+        .bottom-panel {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            padding: 20px 10px;
+            z-index: 1000;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+        }
+        .btn-group { display: flex; gap: 10px; overflow-x: auto; padding: 5px; -webkit-overflow-scrolling: touch; }
         .btn-spot {
-            white-space: nowrap;
+            flex: 0 0 auto;
+            background: #1a73e8; color: white; border: none;
+            padding: 12px 20px; border-radius: 25px; font-size: 14px; font-weight: bold;
+        }
+        
+        /* 現在地へジャンプするボタン */
+        .locate-btn {
+            position: absolute;
+            bottom: 120px; right: 20px;
+            width: 50px; height: 50px;
+            background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 1000; font-size: 24px;
+        }
+
+        /* 現在地マーカー（波紋アニメーション） */
+        .gps-fixed {
             background: #1a73e8;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 11px;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
     </style>
 </head>
 <body>
-    <div class="ui-panel">
-        <div class="dest-info" id="dest-label">📍 地図をタップして目的地を選択</div>
-        <div class="instruction">福大周辺の事故多発エリアを避け、安全な道を選びましょう。</div>
+    <div class="top-panel">
+        <div id="dest-label">目的地をタップで設定</div>
+        <div style="font-size: 12px; color: #666;">赤い円は事故多発地点です。避けて通りましょう。</div>
+    </div>
+
+    <div class="locate-btn" onclick="focusUser()">📍</div>
+
+    <div class="bottom-panel">
         <div class="btn-group">
-            <button class="btn-spot" onclick="setDestination([36.0768, 136.2125], '福井大学 正門')">🎓福大正門</button>
-            <button class="btn-spot" onclick="setDestination([36.0795, 136.2115], '福大前西福井駅')">🚃西福井駅</button>
-            <button class="btn-spot" onclick="setDestination([36.0715, 136.2165], '福井県立美術館')">🎨美術館</button>
+            <button class="btn-spot" onclick="setDestination([36.0768, 136.2125], '福大正門')">🎓 福大正門</button>
+            <button class="btn-spot" onclick="setDestination([36.0795, 136.2115], '西福井駅')">🚃 西福井駅</button>
+            <button class="btn-spot" onclick="setDestination([36.0715, 136.2165], '県立美術館')">🎨 美術館</button>
+            <button class="btn-spot" onclick="setDestination([36.0735, 136.2110], 'ハピライン明新')">🏪 コンビニ</button>
+            <button class="btn-spot" onclick="setDestination([36.0820, 136.2120], '幾久公園')">🌳 幾久公園</button>
         </div>
     </div>
+
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 1. 福井大学 文京キャンパスを中心に設定
-        const map = L.map('map').setView([36.0768, 136.2125], 16);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        const map = L.map('map', { zoomControl: false }).setView([36.0768, 136.2125], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        let userLocation = [36.0768, 136.2125];
-        let routeLine = L.polyline([], {color: '#1a73e8', weight: 8, opacity: 0.6, dashArray: '1, 15'}).addTo(map);
-        let destMarker;
+        let userLocation = null;
+        let userMarker = null;
+        let destMarker = null;
+        let routeLine = L.polyline([], {color: '#1a73e8', weight: 8, opacity: 0.5, dashArray: '10, 10'}).addTo(map);
 
-        // 2. GPS現在地
-        map.locate({setView: false, watch: true});
+        // --- 現在地の設定 ---
+        map.locate({setView: false, watch: true, enableHighAccuracy: true});
         map.on('locationfound', (e) => {
             userLocation = e.latlng;
+            if (!userMarker) {
+                userMarker = L.circleMarker(e.latlng, { className: 'gps-fixed', radius: 10, fillColor: '#1a73e8', fillOpacity: 1 }).addTo(map).bindPopup("あなたの現在地");
+            } else {
+                userMarker.setLatLng(e.latlng);
+            }
             updateRoute();
         });
 
-        // 3. 地図タップで目的地セット
-        map.on('click', function(e) {
-            setDestination(e.latlng, "指定地点");
-        });
+        function focusUser() {
+            if (userLocation) map.setView(userLocation, 17);
+        }
+
+        // --- 目的地設定（タップ ＆ ボタン） ---
+        map.on('click', (e) => setDestination(e.latlng, "カスタム地点"));
 
         function setDestination(latlng, name) {
             document.getElementById('dest-label').innerText = "目的地: " + name;
             if (destMarker) map.removeLayer(destMarker);
             destMarker = L.marker(latlng).addTo(map).bindPopup(name).openPopup();
             updateRoute();
-            map.fitBounds(L.latLngBounds([userLocation, latlng]), {padding: [50, 50]});
+            map.fitBounds(L.latLngBounds([userLocation || [36.0768, 136.2125], latlng]), {padding: [100, 100]});
         }
 
         function updateRoute() {
-            if (destMarker) {
+            if (userLocation && destMarker) {
                 routeLine.setLatLngs([userLocation, destMarker.getLatLng()]);
             }
         }
 
-        // 4. 福大周辺のダミー事故データ（サンプル）
+        // --- 福大周りの事故データ（実情に合わせたサンプル） ---
         const accidents = [
-            {pos: [36.0782, 136.2110], type: "西福井駅前交差点", sev: "重傷", comm: "踏切と交差点が近く複雑です"},
-            {pos: [36.0755, 136.2135], type: "大学南側路地", sev: "軽傷", comm: "学生の飛び出しに注意"},
-            {pos: [36.0740, 136.2170], type: "フェニックス通り合流", sev: "重傷", comm: "交通量が非常に多いです"},
-            {pos: [36.0790, 136.2160], type: "北側交差点", sev: "軽傷", comm: "右左折時の巻き込みに注意"},
-            {pos: [36.0725, 136.2115], type: "明新小学校付近", sev: "軽傷", comm: "通学路につき徐行"}
+            {pos: [36.0782, 136.2110], type: "西福井駅前交差点", sev: "重傷"},
+            {pos: [36.0755, 136.2135], type: "福大正門前通り", sev: "軽傷"},
+            {pos: [36.0740, 136.2170], type: "フェニックス通り入口", sev: "重傷"},
+            {pos: [36.0792, 136.2145], type: "えちぜん鉄道踏切付近", sev: "軽傷"},
+            {pos: [36.0725, 136.2115], type: "明新小・通学路交差点", sev: "重傷"}
         ];
 
         accidents.forEach(acc => {
             const color = acc.sev === '重傷' ? 'red' : 'orange';
-            L.circleMarker(acc.pos, {radius: 10, fillColor: color, color: 'black', weight: 1, fillOpacity: 0.8}).addTo(map);
-            L.circle(acc.pos, {radius: 60, color: 'red', weight: 0, fillColor: 'red', fillOpacity: 0.2}).addTo(map);
+            L.circleMarker(acc.pos, {radius: 12, fillColor: color, color: 'white', weight: 2, fillOpacity: 0.9}).addTo(map)
+             .bindPopup(`⚠️事故多発: ${acc.type}`);
+            L.circle(acc.pos, {radius: 70, color: 'red', weight: 0, fillColor: 'red', fillOpacity: 0.15}).addTo(map);
         });
     </script>
 </body>
