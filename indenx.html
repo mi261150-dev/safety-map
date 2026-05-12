@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>安全周遊マップ</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 100vh; width: 100%; }
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. 地図の初期化（東京中心）
+        const map = L.map('map').setView([35.6812, 139.7671], 14);
+
+        // 2. 背景地図（OpenStreetMap）の読み込み
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 3. 事故データの読み込み
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(accident => {
+                    // 事故地点にサークルを配置
+                    const color = accident.severity === '重傷' ? 'red' : 'orange';
+                    L.circleMarker([accident.lat, accident.lng], {
+                        radius: 8,
+                        fillColor: color,
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map)
+                    .bindPopup(`<b>事故類型:</b> ${accident.type}<br><b>程度:</b> ${accident.severity}`);
+                });
+            });
+    </script>
+</body>
+</html>
